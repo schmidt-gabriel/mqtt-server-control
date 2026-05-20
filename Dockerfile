@@ -7,9 +7,9 @@ RUN apt-get update && apt-get install -y \
     bash \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy your script into the container
-COPY mqtt.sh /usr/local/bin/mqtt.sh
-RUN chmod +x /usr/local/bin/mqtt.sh
+# Copy all scripts into the container
+COPY scripts/*.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.sh
 
 # Run the script directly as the main process
 CMD ["/usr/local/bin/mqtt.sh"]
