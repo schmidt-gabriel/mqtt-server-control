@@ -86,8 +86,6 @@ while true; do
   publish_metric "$TOPIC_CPU_POWER" "$CPU_POWER"
   publish_metric "$TOPIC_DISK" "$DISK_USAGE"
 
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] CPU: ${CPU_USAGE}% | Memory: ${MEMORY_USAGE}% | Temp: ${CPU_TEMP}°C | Power: ${CPU_POWER}W | Disk: ${DISK_USAGE}%"
-
   # Wait 5 seconds before next update
   sleep 5
 done

@@ -1,10 +1,13 @@
 FROM debian:bookworm-slim
 
-# Install ALSA tools, Mosquitto client, and bash
+# Install ALSA tools, Mosquitto client, bash, and system monitoring tools
 RUN apt-get update && apt-get install -y \
     alsa-utils \
     mosquitto-clients \
     bash \
+    procps \
+    util-linux \
+    coreutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all scripts into the container
