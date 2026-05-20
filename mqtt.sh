@@ -14,16 +14,5 @@ if [[ "${ENABLE_VOLUME_CONTROL}" == "true" ]]; then
   "${VOLUME_CONTROL_SCRIPT}" &
 fi
 
-# --- SYSTEM MONITORING ---
-# Check if ENABLE_SYSTEM_MONITOR is set and true
-if [[ "${ENABLE_SYSTEM_MONITOR}" == "true" ]]; then
-  SYSTEM_MONITOR_SCRIPT="${SCRIPT_DIR}/scripts/system_monitor.sh"
-  echo "ENABLE_SYSTEM_MONITOR is enabled. Starting system monitoring..."
-  
-  # Make it executable and run it in background
-  chmod +x "${SYSTEM_MONITOR_SCRIPT}"
-  "${SYSTEM_MONITOR_SCRIPT}" &
-fi
-
 # Keep the script running
 wait
