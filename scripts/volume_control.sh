@@ -44,9 +44,13 @@ pub() {
 # Helper: read the current volume of a given channel ("Front Left" / "Front Right").
 # Falls back to the first reported percentage if the channel label is missing (mono).
 get_channel() {
-  local channel="$1" out
+  local channel="$1" out line
   out=$(amixer -M sget Master)
-  echo "$out" | grep -m 1 "$channel:" | grep -oE '[0-9]+%' | head -1 | tr -d '%'
+  # Prefer the requested channel's line; fall back to the first line that
+  # reports a percentage (e.g. a single "Mono:" line on non-stereo devices).
+  line=$(echo "$out" | grep -m 1 "$channel:")
+  [ -z "$line" ] && line=$(echo "$out" | grep -m 1 -E '\[[0-9]+%\]')
+  echo "$line" | grep -oE '[0-9]+%' | head -1 | tr -d '%'
 }
 
 # Helpers: set one channel while preserving the other (amixer uses L%,R%).
