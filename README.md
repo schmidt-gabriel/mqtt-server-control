@@ -84,11 +84,29 @@ docker run -d \
 
 ### Volume Control Topics
 ```
-server/volume/set     → Subscribe to set volume (0-100)
-server/volume/state   → Publish current volume level
+server/volume/set           → Set volume on both channels (0-100)
+server/volume/state         → Current master level (higher of the two channels)
+
+server/volume/left/set      → Set left channel only (0-100)
+server/volume/left/state    → Current left channel level
+
+server/volume/right/set     → Set right channel only (0-100)
+server/volume/right/state   → Current right channel level
+
+server/volume/left/mute/set    → Mute left   (MUTE | UNMUTE | TOGGLE)
+server/volume/left/mute/state  → Left mute state  (MUTED | UNMUTED)
+server/volume/right/mute/set   → Mute right  (MUTE | UNMUTE | TOGGLE)
+server/volume/right/mute/state → Right mute state (MUTED | UNMUTED)
 ```
 
-The current volume state is published with the **retain flag** (`-r`) to maintain state after reconnection.
+Setting one channel keeps the other channel unchanged. The master topic
+(`server/volume/set`) sets both channels to the same level.
+
+Mute is implemented by setting the channel volume to `0`; the pre-mute level
+is remembered and restored on unmute. A channel sitting at `0%` is reported as
+`MUTED`.
+
+All state topics are published with the **retain flag** (`-r`) to maintain state after reconnection.
 
 ## Files
 
@@ -100,10 +118,10 @@ Main entry point script that orchestrates the services.
 
 ### volume_control.sh
 Handles MQTT-controlled volume adjustments.
-- Subscribes to `server/volume/set` topic
+- Subscribes to the master and per-channel `set` topics
 - Validates input (0-100 range)
-- Uses `amixer` to control system volume
-- Publishes current volume state to `server/volume/state`
+- Uses `amixer` to control system volume, reading per-channel levels (`Front Left` / `Front Right`)
+- Publishes current master and per-channel state to the matching `state` topics
 
 ## Usage Examples
 
@@ -115,15 +133,76 @@ export ENABLE_VOLUME_CONTROL="true"
 
 ### Set Volume via MQTT
 ```bash
+# Both channels at once
 mosquitto_pub -h 192.168.1.100 -u mqtt_user -P mqtt_password \
   -t "server/volume/set" -m "75"
+
+# Left channel only
+mosquitto_pub -h 192.168.1.100 -u mqtt_user -P mqtt_password \
+  -t "server/volume/left/set" -m "60"
+
+# Right channel only
+mosquitto_pub -h 192.168.1.100 -u mqtt_user -P mqtt_password \
+  -t "server/volume/right/set" -m "90"
+
+# Mute / unmute / toggle a single side
+mosquitto_pub -h 192.168.1.100 -u mqtt_user -P mqtt_password \
+  -t "server/volume/left/mute/set" -m "TOGGLE"
 ```
 
 ### Monitor Volume State
 ```bash
+# All state topics at once
 mosquitto_sub -h 192.168.1.100 -u mqtt_user -P mqtt_password \
-  -t "server/volume/state"
+  -v -t "server/volume/state" -t "server/volume/+/state"
 ```
+
+### Home Assistant Configuration
+
+Add these MQTT `number` sliders to your `configuration.yaml` (under the `mqtt:` key):
+
+```yaml
+mqtt:
+  number:
+    - name: "Server Volume"
+      command_topic: "server/volume/set"
+      state_topic: "server/volume/state"
+      min: 0
+      max: 100
+      step: 1
+      unit_of_measurement: "%"
+
+    - name: "Server Volume Left"
+      command_topic: "server/volume/left/set"
+      state_topic: "server/volume/left/state"
+      min: 0
+      max: 100
+      step: 1
+      unit_of_measurement: "%"
+
+    - name: "Server Volume Right"
+      command_topic: "server/volume/right/set"
+      state_topic: "server/volume/right/state"
+      min: 0
+      max: 100
+      step: 1
+      unit_of_measurement: "%"
+
+    - name: "Server Mute Left"
+      command_topic: "server/volume/left/mute/set"
+      state_topic: "server/volume/left/mute/state"
+      payload_on: "MUTE"
+      payload_off: "UNMUTE"
+      state_on: "MUTED"
+      state_off: "UNMUTED"
+
+    - name: "Server Mute Right"
+      command_topic: "server/volume/right/mute/set"
+      state_topic: "server/volume/right/mute/state"
+      payload_on: "MUTE"
+      payload_off: "UNMUTE"
+      state_on: "MUTED"
+      state_off: "UNMUTED"
 
 ## Troubleshooting
 
