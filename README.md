@@ -79,6 +79,7 @@ docker run -d \
 | `MQTT_USER` | Yes | - | MQTT username |
 | `MQTT_PASS` | Yes | - | MQTT password |
 | `ENABLE_VOLUME_CONTROL` | No | false | Enable volume control service |
+| `MIXER_CONTROL` | No | `PCM` | ALSA simple control to drive. Must be **stereo** (separate Front Left/Front Right channels) for per-channel control — `Master` is often mono. Use `amixer scontrols` / `amixer sget <name>` to inspect; set to `Speaker` or `Headphone` if `PCM` doesn't affect your output. |
 
 ## MQTT Topics
 

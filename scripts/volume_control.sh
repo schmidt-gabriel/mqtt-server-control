@@ -16,6 +16,12 @@ TOPIC_LEFT_MUTE_STATE="server/volume/left/mute/state"
 TOPIC_RIGHT_MUTE_SET="server/volume/right/mute/set"
 TOPIC_RIGHT_MUTE_STATE="server/volume/right/mute/state"
 
+# ALSA simple control to operate on. Must be a stereo control (with separate
+# "Front Left"/"Front Right" channels) for independent left/right control —
+# "Master" is mono on many codecs and cannot do per-channel. Override with
+# $MIXER_CONTROL (e.g. "Speaker" or "Headphone") if PCM doesn't drive output.
+CONTROL="${MIXER_CONTROL:-PCM}"
+
 # --- ENVIRONMENT VARIABLES VALIDATION ---
 # List of mandatory environment variables required by the script
 REQUIRED_VARS=("BROKER_IP" "PORT" "MQTT_USER" "MQTT_PASS")
@@ -45,7 +51,7 @@ pub() {
 # Falls back to the first reported percentage if the channel label is missing (mono).
 get_channel() {
   local channel="$1" out line
-  out=$(amixer -M sget Master)
+  out=$(amixer -M sget "$CONTROL")
   # Prefer the requested channel's line; fall back to the first line that
   # reports a percentage (e.g. a single "Mono:" line on non-stereo devices).
   line=$(echo "$out" | grep -m 1 "$channel:")
@@ -54,8 +60,8 @@ get_channel() {
 }
 
 # Helpers: set one channel while preserving the other (amixer uses L%,R%).
-set_left()  { amixer -M sset Master "${1}%,$(get_channel 'Front Right')%" > /dev/null 2>&1; }
-set_right() { amixer -M sset Master "$(get_channel 'Front Left')%,${1}%" > /dev/null 2>&1; }
+set_left()  { amixer -M sset "$CONTROL" "${1}%,$(get_channel 'Front Right')%" > /dev/null 2>&1; }
+set_right() { amixer -M sset "$CONTROL" "$(get_channel 'Front Left')%,${1}%" > /dev/null 2>&1; }
 
 # Helper: publish master, per-channel, and mute state (retained).
 publish_state() {
@@ -90,7 +96,7 @@ mosquitto_sub -h "$BROKER_IP" -p "$PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -v \
   case "$topic" in
     "$TOPIC_SET")
       [[ "$payload" =~ ^[0-9]+$ ]] || continue
-      amixer -M sset Master "${payload}%" > /dev/null 2>&1
+      amixer -M sset "$CONTROL" "${payload}%" > /dev/null 2>&1
       [ "$payload" -gt 0 ] && { LEFT_PREMUTE=$payload; RIGHT_PREMUTE=$payload; }
       ;;
 
