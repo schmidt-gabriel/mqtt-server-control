@@ -40,8 +40,8 @@ chmod +x *.sh
 ```bash
 export BROKER_IP="192.168.1.100"
 export PORT="1883"
-export USER="mqtt_user"
-export PASS="mqtt_password"
+export MQTT_USER="mqtt_user"
+export MQTT_PASS="mqtt_password"
 export ENABLE_VOLUME_CONTROL="true"
 ```
 
@@ -62,8 +62,8 @@ Run with environment variables:
 docker run -d \
   -e BROKER_IP="192.168.1.100" \
   -e PORT="1883" \
-  -e USER="mqtt_user" \
-  -e PASS="mqtt_password" \
+  -e MQTT_USER="mqtt_user" \
+  -e MQTT_PASS="mqtt_password" \
   -e ENABLE_VOLUME_CONTROL="true" \
   mqtt-server-control
 ```
@@ -76,8 +76,8 @@ docker run -d \
 |----------|----------|---------|-------------|
 | `BROKER_IP` | Yes | - | MQTT broker IP address |
 | `PORT` | Yes | - | MQTT broker port |
-| `USER` | Yes | - | MQTT username |
-| `PASS` | Yes | - | MQTT password |
+| `MQTT_USER` | Yes | - | MQTT username |
+| `MQTT_PASS` | Yes | - | MQTT password |
 | `ENABLE_VOLUME_CONTROL` | No | false | Enable volume control service |
 
 ## MQTT Topics
@@ -211,8 +211,8 @@ Ensure all required variables are exported:
 ```bash
 export BROKER_IP="your.broker.ip"
 export PORT="1883"
-export USER="username"
-export PASS="password"
+export MQTT_USER="username"
+export MQTT_PASS="password"
 ```
 
 ### Volume control not working

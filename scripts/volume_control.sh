@@ -18,7 +18,7 @@ TOPIC_RIGHT_MUTE_STATE="server/volume/right/mute/state"
 
 # --- ENVIRONMENT VARIABLES VALIDATION ---
 # List of mandatory environment variables required by the script
-REQUIRED_VARS=("BROKER_IP" "PORT" "USER" "PASS")
+REQUIRED_VARS=("BROKER_IP" "PORT" "MQTT_USER" "MQTT_PASS")
 ERROR=0
 
 for var in "${REQUIRED_VARS[@]}"; do
@@ -38,7 +38,7 @@ fi
 
 # Helper: publish a retained message.
 pub() {
-  mosquitto_pub -h "$BROKER_IP" -p "$PORT" -u "$USER" -P "$PASS" -t "$1" -m "$2" -r
+  mosquitto_pub -h "$BROKER_IP" -p "$PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$1" -m "$2" -r
 }
 
 # Helper: read the current volume of a given channel ("Front Left" / "Front Right").
@@ -83,7 +83,7 @@ RIGHT_PREMUTE=$(get_channel "Front Right"); [ "${RIGHT_PREMUTE:-0}" -gt 0 ] || R
 publish_state
 
 # 2. Listen on all set topics; -v prefixes each message with its topic.
-mosquitto_sub -h "$BROKER_IP" -p "$PORT" -u "$USER" -P "$PASS" -v \
+mosquitto_sub -h "$BROKER_IP" -p "$PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -v \
   -t "$TOPIC_SET" -t "$TOPIC_LEFT_SET" -t "$TOPIC_RIGHT_SET" \
   -t "$TOPIC_LEFT_MUTE_SET" -t "$TOPIC_RIGHT_MUTE_SET" | while read -r topic payload; do
 
