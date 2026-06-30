@@ -79,7 +79,9 @@ docker run -d \
 | `MQTT_USER` | Yes | - | MQTT username |
 | `MQTT_PASS` | Yes | - | MQTT password |
 | `ENABLE_VOLUME_CONTROL` | No | false | Enable volume control service |
-| `MIXER_CONTROL` | No | `PCM` | ALSA simple control to drive. Must be **stereo** (separate Front Left/Front Right channels) for per-channel control — `Master` is often mono. Use `amixer scontrols` / `amixer sget <name>` to inspect; set to `Speaker` or `Headphone` if `PCM` doesn't affect your output. |
+| `MIXER_CONTROL` | No | `PCM` | ALSA simple control to drive. Must be **stereo** (separate Front Left/Front Right channels) for per-channel control. `Master` is often mono. Use `amixer scontrols` / `amixer sget <name>` to inspect; set to `Speaker` or `Headphone` if `PCM` doesn't affect your output. |
+| `MIXER_CARD` | No | `0` | ALSA card index the control lives on (`amixer -c <n>`). Find it with `cat /proc/asound/cards`. |
+| `INIT_PCM` | No | `downmix` | PCM opened at startup to instantiate `MIXER_CONTROL` if it doesn't exist yet (see "Software volume controls" below). |
 
 ## MQTT Topics
 
@@ -108,6 +110,22 @@ is remembered and restored on unmute. A channel sitting at `0%` is reported as
 `MUTED`.
 
 All state topics are published with the **retain flag** (`-r`) to maintain state after reconnection.
+
+### Software volume controls (`DownmixVol`)
+
+If your hardware has no usable stereo control, create a software one with ALSA's
+`softvol` plugin instead. A `softvol` control (commonly named `DownmixVol`) is
+not a hardware mixer; it is created the **first time its PCM is opened** by a
+playback client, after which it lives in the card's control list until reboot.
+
+That is why `amixer: Unable to find simple control 'DownmixVol',0` appears at a
+cold start: nothing has opened the PCM yet. On startup `volume_control.sh` now
+checks for `MIXER_CONTROL` and, if missing, opens `INIT_PCM` for one second of
+silence (`aplay`) to instantiate it. This requires an `/etc/asound.conf` that
+defines `INIT_PCM` as a `softvol` PCM with `control.name` equal to
+`MIXER_CONTROL`; a ready-to-use example lives at `homelab/Shairport/asound.conf`.
+Mount the same file into this container so both the player and the bridge share
+one control.
 
 ## Files
 
